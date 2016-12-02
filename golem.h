@@ -58,8 +58,8 @@
 
 
 /* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5d"
-#define     VER_TXT   "moved servo data table to golem_data.c"
+#define     VER_NUM   "0.5e"
+#define     VER_TXT   "servo descriptive data now sourced from yKINE"
 
 
 
@@ -80,7 +80,7 @@
 
 
 #define     MAX_SERVO   32
-#define     LEN_NAME    20
+#define     LEN_LABEL   20
 typedef     struct cSERVO   tSERVO;
 struct cSERVO {
    /*---(key info)----------*/
@@ -88,10 +88,10 @@ struct cSERVO {
    char        seg;
    char        servo;
    /*---(descriptive)-------*/
-   char        leg_name    [LEN_NAME];
-   char        leg_short   [LEN_NAME];
-   char        seg_name    [LEN_NAME];
-   char        seg_short   [LEN_NAME];
+   char        leg_name    [LEN_LABEL];
+   char        leg_short   [LEN_LABEL];
+   char        seg_name    [LEN_LABEL];
+   char        seg_short   [LEN_LABEL];
    /*---(setup data)--------*/
    int         adjust;
    int         min;
@@ -101,10 +101,12 @@ struct cSERVO {
    int         adj_min;
    int         adj_attn;
    int         adj_max;
-   char        min_dir    [LEN_NAME];
+   char        min_dir    [LEN_LABEL];
 };
 extern tSERVO      g_servo_data  [MAX_SERVO];
 
+char        DATA_init (void);
+char        DATA_list (void);
 
 
 #endif

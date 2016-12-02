@@ -17,7 +17,7 @@ char      debug     = '-';
 
 #define   MAX_POSES     100
 struct cPOSES {
-   char        title       [LEN_NAME];
+   char        title       [LEN_LABEL];
    char        abbr        [10];
    int         pos         [18];
 } s_poses [MAX_POSES] = {
@@ -901,6 +901,13 @@ main     (int argc, char *argv[])
    int       i         = 0;
    char      buf[500]  = "";
    char     *a         = NULL;
+
+   DATA_init ();
+   DATA_list ();
+
+   return 0;
+
+
    x_port = COMM_open ("/dev/usb/ttyUSB0");
    hex_align_table  (x_port);
    if (argc == 1) {
