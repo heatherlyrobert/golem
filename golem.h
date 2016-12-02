@@ -51,6 +51,18 @@
 
 
 
+/*===[[ HEADER GUARD ]]===================================*/
+#ifndef GOLEM
+#define GOLEM  yes
+
+
+
+/* rapidly evolving version number to aid with visual change confirmation     */
+#define     VER_NUM   "0.5c"
+#define     VER_TXT   "moved communications functions to golem_comm.c"
+
+
+
 /*===[[ library headers -- standard ]]========================================*/
 #include   <stdio.h>              /* clibc standard input/output              */
 #include   <stdlib.h>             /* clibc standard                           */
@@ -66,14 +78,11 @@
 #include    <yVIKEYS.h>           /* CUSTOM heatherly vi_keys standard        */
 #include    <ySTR.h>              /* CUSTOM heatherly string handling         */
 
-typedef struct termios TERMIOS;
-TERMIOS   oldtio;
-TERMIOS   newtio;
 
 
 
+#endif
 
-/* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5b"
-#define     VER_TXT   "preparing for yKINE and script use"
 
+
+/*============================----beg-of-source---============================*/
