@@ -1,69 +1,8 @@
 /*============================----beg-of-source---============================*/
 
-/*===[[ HEADER ]]=============================================================*
-
- *   focus         : (RB) robotics
- *   niche         : (co) control
- *   application   : golem       (supernatural, slow, dimwitted animated figure)
- *   purpose       : translate and transfer scripts to the robots
- *
- *   base_system   : gnu/linux   (powerful, ubiquitous, technical, and hackable)
- *   lang_name     : gnu/ansi-c  (right, just, best, universal, and everlasting)
- *   dependencies  : none
- *   size goal     : small (appoximately 1,000 slocL)
- *
- *   author        : the_heatherlys
- *   created       : 2010-10
- *   priorities    : direct, simple, brief, vigorous, and lucid (h.w. fowler)
- *   end goal      : loosely coupled, strict interface, maintainable, portable
- * 
- */
-/*===[[ SUMMARY ]]============================================================*
-
- *   golem is our attempt to seperate robotic control from decision-making by
- *   focusing exclusively on translating stance and movements into instructions
- *   that the robot can unthinkingly execute.
- *
- */
-/*===[[ PURPOSE ]]============================================================*
-
- *   golem is a scriptable application that takes in a stream of stances and
- *   movements while translating them into commands that the robot can
- *   understand.  initially, golem is solely focused on the lynxmotion CHR-3
- *   robotic hexapod with 18 DOF.
- *
- *   golem will focus on...
- *      - taking in script statements on stdin
- *      - translating leg angles into servo positions
- *      - communicating the servor position to the hexapod servo controller
- *
- *    golem will not...
- *       - provide a visual interface or interaction
- *       - allow any editing or changes
- *       - give any particular feedback other than errors
- *
- *
- *
- *
- *
- */
-/*============================================================================*/
+#include "golem.h"
 
 
-
-/*===[[ library headers -- standard ]]========================================*/
-#include   <stdio.h>              /* clibc standard input/output              */
-#include   <stdlib.h>             /* clibc standard                           */
-#include   <string.h>             /* clibc standard string handling           */
-#include   <unistd.h>             /* clibc standard unix interface            */
-#include   <error.h>              /* clibc standard error handling            */
-#include   <fcntl.h>              /* clibc standard file control              */
-#include   <termios.h>            /* clibc standard terminal control          */
-#include   <math.h>               /* clibc standard math                      */
-
-typedef struct termios TERMIOS;
-TERMIOS   oldtio;
-TERMIOS   newtio;
 
 int       x_port    = 0;       /* port file descriptor                     */
 
@@ -85,11 +24,16 @@ struct  cARM {
 #define     LEN_NAME    20
 typedef     struct cSERVO   tSERVO;
 struct cSERVO {
-   char        leg_num;
+   /*---(key info)----------*/
+   char        leg;
+   char        seg;
    char        servo;
+   /*---(descriptive)-------*/
    char        leg_name    [LEN_NAME];
-   char        leg_short   [5];
-   char        joint       [LEN_NAME];
+   char        leg_short   [LEN_NAME];
+   char        seg_name    [LEN_NAME];
+   char        seg_short   [LEN_NAME];
+   /*---(setup data)--------*/
    int         adjust;
    int         min;
    int         attn;
@@ -101,38 +45,39 @@ struct cSERVO {
    char        min_dir    [LEN_NAME];
 };
 tSERVO      s_servo   [MAX_SERVO] = {
-   {  0 , 15, "right_rear"    , "rr" , "femur"          ,    0,  700, 1500, 2300,   1,  -50,    0,   25, "cclock" },
-   {  0 ,  1, "right_rear"    , "rr" , "patella"        ,  -25,  600, 1500, 1900,  -1,  -25,  -25,  -25, "up"     },
-   {  0 ,  2, "right_rear"    , "rr" , "tibia"          , -225,  750, 1500, 1800,   1, -225, -225, -225, "out"    },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  1 ,  4, "right_middle"  , "rm" , "femur"          ,    0,  700, 1500, 2300,   1,  -25,    0,   75, "cclock" },
-   {  1 ,  5, "right_middle"  , "rm" , "patella"        ,   50,  600, 1500, 1900,  -1,   75,   75,   35, "up"     },
-   {  1 ,  6, "right_middle"  , "rm" , "tibia"          , -150,  750, 1500, 1800,   1, -125, -150, -150, "out"    },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  2 ,  8, "right_front"   , "rf" , "femur"          ,   25,  700, 1500, 2300,   1,   25,   25,  100, "cclock" },
-   {  2 ,  9, "right_front"   , "rf" , "patella"        ,   40,  600, 1500, 1900,  -1,   50,   50,   25, "up"     },
-   {  2 , 10, "right_front"   , "rf" , "tibia"          ,   75,  750, 1500, 1800,   1,   50,   50,   75, "out"    },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  5 , 16, "left_rear"     , "lr" , "femur"          ,   50,  700, 1500, 2300,   1,   25,   50,   50, "cclock" },
-   {  5 , 17, "left_rear"     , "lr" , "patella"        ,    0,  600, 1500, 1900,   1,   50,  -25,  -25, "up"     },
-   {  5 , 18, "left_rear"     , "lr" , "tibia"          , -175,  750, 1500, 1800,  -1, -225, -175, -175, "out"    },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  4 , 20, "left_middle"   , "lm" , "femur"          ,  -50,  700, 1500, 2300,   1,    0,  -50,  -50, "cclock" },
-   {  4 , 21, "left_middle"   , "lm" , "patella"        ,  225,  600, 1500, 1900,   1,  250,  200,  250, "up"     },
-   {  4 , 22, "left_middle"   , "lm" , "tibia"          ,  225,  750, 1500, 1800,  -1,  225,  250,  225, "out"    },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  3 , 24, "left_front"    , "lf" , "femur"          ,    0,  700, 1500, 2300,   1,  -50,    0,    0, "cclock" },
-   {  3 , 25, "left_front"    , "lf" , "patella"        ,  250,  600, 1500, 1900,   1,  250,  250,  250, "up"     },
-   {  3 , 26, "left_front"    , "lf" , "tibia"          ,    0,  750, 1500, 1800,  -1,  -25,   25,    0, "out"    },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   { -1 , -1, ""              , ""   , ""               ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   /* --leg---  ---seg---- servo  ---legname------  abbr   ---segname-------  -abbr-                                                          */
+   {  YKINE_RR, YKINE_FEMU,  15 , "right_rear"    , "rr" , "femur"          , ""    ,    0,  700, 1500, 2300,   1,  -50,    0,   25, "cclock" },
+   {  YKINE_RR, YKINE_PATE,   1 , "right_rear"    , "rr" , "patella"        , ""    ,  -25,  600, 1500, 1900,  -1,  -25,  -25,  -25, "up"     },
+   {  YKINE_RR, YKINE_FEMU,   2 , "right_rear"    , "rr" , "tibia"          , ""    , -225,  750, 1500, 1800,   1, -225, -225, -225, "out"    },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  YKINE_RM, YKINE_FEMU,   4 , "right_middle"  , "rm" , "femur"          , ""    ,    0,  700, 1500, 2300,   1,  -25,    0,   75, "cclock" },
+   {  YKINE_RM, YKINE_PATE,   5 , "right_middle"  , "rm" , "patella"        , ""    ,   50,  600, 1500, 1900,  -1,   75,   75,   35, "up"     },
+   {  YKINE_RM, YKINE_FEMU,   6 , "right_middle"  , "rm" , "tibia"          , ""    , -150,  750, 1500, 1800,   1, -125, -150, -150, "out"    },
+   {   -1      , -1        , -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  YKINE_RF, YKINE_FEMU,   8 , "right_front"   , "rf" , "femur"          , ""    ,   25,  700, 1500, 2300,   1,   25,   25,  100, "cclock" },
+   {  YKINE_RF, YKINE_PATE,   9 , "right_front"   , "rf" , "patella"        , ""    ,   40,  600, 1500, 1900,  -1,   50,   50,   25, "up"     },
+   {  YKINE_RF, YKINE_FEMU,  10 , "right_front"   , "rf" , "tibia"          , ""    ,   75,  750, 1500, 1800,   1,   50,   50,   75, "out"    },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  YKINE_LR, YKINE_FEMU,  16 , "left_rear"     , "lr" , "femur"          , ""    ,   50,  700, 1500, 2300,   1,   25,   50,   50, "cclock" },
+   {  YKINE_LR, YKINE_PATE,  17 , "left_rear"     , "lr" , "patella"        , ""    ,    0,  600, 1500, 1900,   1,   50,  -25,  -25, "up"     },
+   {  YKINE_LR, YKINE_FEMU,  18 , "left_rear"     , "lr" , "tibia"          , ""    , -175,  750, 1500, 1800,  -1, -225, -175, -175, "out"    },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  YKINE_LM, YKINE_FEMU,  20 , "left_middle"   , "lm" , "femur"          , ""    ,  -50,  700, 1500, 2300,   1,    0,  -50,  -50, "cclock" },
+   {  YKINE_LM, YKINE_PATE,  21 , "left_middle"   , "lm" , "patella"        , ""    ,  225,  600, 1500, 1900,   1,  250,  200,  250, "up"     },
+   {  YKINE_LM, YKINE_FEMU,  22 , "left_middle"   , "lm" , "tibia"          , ""    ,  225,  750, 1500, 1800,  -1,  225,  250,  225, "out"    },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  YKINE_RF, YKINE_FEMU,  24 , "left_front"    , "lf" , "femur"          , ""    ,    0,  700, 1500, 2300,   1,  -50,    0,    0, "cclock" },
+   {  YKINE_RF, YKINE_PATE,  25 , "left_front"    , "lf" , "patella"        , ""    ,  250,  600, 1500, 1900,   1,  250,  250,  250, "up"     },
+   {  YKINE_RF, YKINE_FEMU,  26 , "left_front"    , "lf" , "tibia"          , ""    ,    0,  750, 1500, 1800,  -1,  -25,   25,    0, "out"    },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
+   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
 };
 
 #define   MAX_POSES     100
@@ -145,6 +90,13 @@ struct cPOSES {
    { "attention"       , "attn"    , 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500 },
    { "bulldog"         , ""        , 2000, 1725, 1150, 1500, 1700, 1150, 1000, 1725, 1150, 2000, 1775, 1150, 1500, 1700, 1150, 1000, 1700, 1150 },
 };
+
+
+/*====================------------------------------------====================*/
+/*===----                         initial setup                        ----===*/
+/*====================------------------------------------====================*/
+static void      o___SETUP___________________o (void) {;}
+
 
 
 /*====================------------------------------------====================*/
@@ -367,7 +319,7 @@ hex_align_table    (int a_port)
    int       i         = 0;       /* loop iterator                            */
    char      buf[1000]   = "";
    for (i = 0; i < MAX_SERVO; ++i) {
-      if (s_servo [i].leg_num <  0) continue;
+      if (s_servo [i].leg <  0) continue;
       sprintf (buf, "#%-2d PO0\r", i);
       write(a_port, buf, strlen (buf));
    }
@@ -858,7 +810,7 @@ pos_joint          (int a_port, int a_joint, int a_angle)
    if (a_joint == -1) printf ("---leg-------------  ---part--------  --  --  -req  -min  -max  -ang  flip  -adj  -fin\n");
    if (a_joint <  0        )      return -1;
    if (a_joint >= MAX_SERVO)      return -2;
-   if (s_servo[a_joint].leg_num == -1)  return -3;
+   if (s_servo[a_joint].leg == -1)  return -3;
    /*---(filter and limit)---------------*/
    x_adjust = adjust (a_joint, a_angle);
    i        = a_joint;
@@ -872,8 +824,8 @@ pos_joint          (int a_port, int a_joint, int a_angle)
    write    (a_port, buf, strlen(buf));
    /*---(display debugging)--------------*/
    printf   ("#%d  %-15.15s  %-15.15s  %2d  %2d  ",
-         s_servo [a_joint].leg_num , s_servo [a_joint].leg_name,
-         s_servo [a_joint].joint   , a_joint                   ,
+         s_servo [a_joint].leg     , s_servo [a_joint].leg_name,
+         s_servo [a_joint].seg_name, a_joint                   ,
          s_servo [a_joint].servo   );
    printf   ("%4d  %4d  %4d  %4d  %4d  %4d  %4d\n",
          a_angle                   ,
