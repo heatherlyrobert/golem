@@ -14,71 +14,6 @@ char      debug     = '-';
 #define   SEC2MSEC   1000.0
 
 
-typedef  struct cARM tARM;
-struct  cARM {
-   int         center;
-} arm [10] = { 1500, 1520, 1560, 1460, 1570, 1100 };
-
-
-#define     MAX_SERVO   32
-#define     LEN_NAME    20
-typedef     struct cSERVO   tSERVO;
-struct cSERVO {
-   /*---(key info)----------*/
-   char        leg;
-   char        seg;
-   char        servo;
-   /*---(descriptive)-------*/
-   char        leg_name    [LEN_NAME];
-   char        leg_short   [LEN_NAME];
-   char        seg_name    [LEN_NAME];
-   char        seg_short   [LEN_NAME];
-   /*---(setup data)--------*/
-   int         adjust;
-   int         min;
-   int         attn;
-   int         max;
-   char        flip;
-   int         adj_min;
-   int         adj_attn;
-   int         adj_max;
-   char        min_dir    [LEN_NAME];
-};
-tSERVO      s_servo   [MAX_SERVO] = {
-   /* --leg---  ---seg---- servo  ---legname------  abbr   ---segname-------  -abbr-                                                          */
-   {  YKINE_RR, YKINE_FEMU,  15 , "right_rear"    , "rr" , "femur"          , ""    ,    0,  700, 1500, 2300,   1,  -50,    0,   25, "cclock" },
-   {  YKINE_RR, YKINE_PATE,   1 , "right_rear"    , "rr" , "patella"        , ""    ,  -25,  600, 1500, 1900,  -1,  -25,  -25,  -25, "up"     },
-   {  YKINE_RR, YKINE_FEMU,   2 , "right_rear"    , "rr" , "tibia"          , ""    , -225,  750, 1500, 1800,   1, -225, -225, -225, "out"    },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  YKINE_RM, YKINE_FEMU,   4 , "right_middle"  , "rm" , "femur"          , ""    ,    0,  700, 1500, 2300,   1,  -25,    0,   75, "cclock" },
-   {  YKINE_RM, YKINE_PATE,   5 , "right_middle"  , "rm" , "patella"        , ""    ,   50,  600, 1500, 1900,  -1,   75,   75,   35, "up"     },
-   {  YKINE_RM, YKINE_FEMU,   6 , "right_middle"  , "rm" , "tibia"          , ""    , -150,  750, 1500, 1800,   1, -125, -150, -150, "out"    },
-   {   -1      , -1        , -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  YKINE_RF, YKINE_FEMU,   8 , "right_front"   , "rf" , "femur"          , ""    ,   25,  700, 1500, 2300,   1,   25,   25,  100, "cclock" },
-   {  YKINE_RF, YKINE_PATE,   9 , "right_front"   , "rf" , "patella"        , ""    ,   40,  600, 1500, 1900,  -1,   50,   50,   25, "up"     },
-   {  YKINE_RF, YKINE_FEMU,  10 , "right_front"   , "rf" , "tibia"          , ""    ,   75,  750, 1500, 1800,   1,   50,   50,   75, "out"    },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  YKINE_LR, YKINE_FEMU,  16 , "left_rear"     , "lr" , "femur"          , ""    ,   50,  700, 1500, 2300,   1,   25,   50,   50, "cclock" },
-   {  YKINE_LR, YKINE_PATE,  17 , "left_rear"     , "lr" , "patella"        , ""    ,    0,  600, 1500, 1900,   1,   50,  -25,  -25, "up"     },
-   {  YKINE_LR, YKINE_FEMU,  18 , "left_rear"     , "lr" , "tibia"          , ""    , -175,  750, 1500, 1800,  -1, -225, -175, -175, "out"    },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  YKINE_LM, YKINE_FEMU,  20 , "left_middle"   , "lm" , "femur"          , ""    ,  -50,  700, 1500, 2300,   1,    0,  -50,  -50, "cclock" },
-   {  YKINE_LM, YKINE_PATE,  21 , "left_middle"   , "lm" , "patella"        , ""    ,  225,  600, 1500, 1900,   1,  250,  200,  250, "up"     },
-   {  YKINE_LM, YKINE_FEMU,  22 , "left_middle"   , "lm" , "tibia"          , ""    ,  225,  750, 1500, 1800,  -1,  225,  250,  225, "out"    },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  YKINE_RF, YKINE_FEMU,  24 , "left_front"    , "lf" , "femur"          , ""    ,    0,  700, 1500, 2300,   1,  -50,    0,    0, "cclock" },
-   {  YKINE_RF, YKINE_PATE,  25 , "left_front"    , "lf" , "patella"        , ""    ,  250,  600, 1500, 1900,   1,  250,  250,  250, "up"     },
-   {  YKINE_RF, YKINE_FEMU,  26 , "left_front"    , "lf" , "tibia"          , ""    ,    0,  750, 1500, 1800,  -1,  -25,   25,    0, "out"    },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-   {  -1      , -1        ,  -1 , ""              , ""   , ""               , ""    ,    0,    0,    0,    0,   1,    0,    0,    0, ""       },
-};
 
 #define   MAX_POSES     100
 struct cPOSES {
@@ -230,7 +165,7 @@ hex_align_table    (int a_port)
    int       i         = 0;       /* loop iterator                            */
    char      buf[1000]   = "";
    for (i = 0; i < MAX_SERVO; ++i) {
-      if (s_servo [i].leg <  0) continue;
+      if (g_servo_data [i].leg <  0) continue;
       sprintf (buf, "#%-2d PO0\r", i);
       write(a_port, buf, strlen (buf));
    }
@@ -654,53 +589,53 @@ adjust             (int a_joint, int a_angle)
    printf ("\n");
    printf ("focu   = %4d, angle  = %4d\n", i, a_angle);
    i      = a_joint;
-   x_min  = s_servo [i].min;
-   x_attn = s_servo [i].attn;
-   x_max  = s_servo [i].max;
+   x_min  = g_servo_data [i].min;
+   x_attn = g_servo_data [i].attn;
+   x_max  = g_servo_data [i].max;
    printf ("x_min  = %4d, x_attn = %4d, x_max  = %4d\n", x_min, x_attn, x_max);
-   printf ("adj_m  = %4d, adj_a  = %4d, adj_x  = %4d\n", s_servo[i].adj_min, s_servo[i].adj_attn, s_servo[i].adj_max);
+   printf ("adj_m  = %4d, adj_a  = %4d, adj_x  = %4d\n", g_servo_data[i].adj_min, g_servo_data[i].adj_attn, g_servo_data[i].adj_max);
    /*---(figure)-------------------------*/
    if (a_angle == x_attn) {
       printf ("EQUAL to attention\n");
-      printf ("middle,                      so attn = %4d\n", s_servo [i].adj_attn);
-      return s_servo [i].adj_attn;
+      printf ("middle,                      so attn = %4d\n", g_servo_data [i].adj_attn);
+      return g_servo_data [i].adj_attn;
    }
    if (a_angle <= x_attn) {
       printf ("LESSER than attention\n");
       x_range = (x_attn - x_min);
       x_qtr   = x_range / 4.0;
       if (a_angle <= x_min  + x_qtr) {
-         printf ("smallest qtr of bottom (1/8), so min  = %4d\n", s_servo [i].adj_min);
-         return s_servo [i].adj_min;
+         printf ("smallest qtr of bottom (1/8), so min  = %4d\n", g_servo_data [i].adj_min);
+         return g_servo_data [i].adj_min;
       }
       if (a_angle >= x_attn - x_qtr) {
-         printf ("largest qtr of bottom (4/8),  so attn = %4d\n", s_servo [i].adj_attn);
-         return s_servo [i].adj_attn;
+         printf ("largest qtr of bottom (4/8),  so attn = %4d\n", g_servo_data [i].adj_attn);
+         return g_servo_data [i].adj_attn;
       }
-      x_diff  = s_servo [i].adj_attn - s_servo [i].adj_min;
+      x_diff  = g_servo_data [i].adj_attn - g_servo_data [i].adj_min;
       x_start = a_angle - x_min - x_qtr;
       x_pct   = x_start / (2.0 * x_qtr);
       printf ("x_range= %4d, x_qtr  = %4d, x_diff = %4d, x_start= %4d, x_pct  = %5.3f\n", x_range, x_qtr, x_diff, x_start, x_pct);
-      printf ("middle half of bottom (2-3/8), so = %4d\n", s_servo [i].adj_min  + (int) (x_pct * x_diff));
-      return s_servo [i].adj_min + (int) (x_pct * x_diff);
+      printf ("middle half of bottom (2-3/8), so = %4d\n", g_servo_data [i].adj_min  + (int) (x_pct * x_diff));
+      return g_servo_data [i].adj_min + (int) (x_pct * x_diff);
    } else {
       printf ("GREATER than attention\n");
       x_range = (x_max  - x_attn);
       x_qtr   = x_range / 4.0;
       if (a_angle >= x_max  - x_qtr) {
-         printf ("largest qtr of top    (8/8), so max  = %4d\n", s_servo [i].adj_max);
-         return s_servo [i].adj_max;
+         printf ("largest qtr of top    (8/8), so max  = %4d\n", g_servo_data [i].adj_max);
+         return g_servo_data [i].adj_max;
       }
       if (a_angle <= x_attn + x_qtr) {
-         printf ("smallest qtr of top   (5/8), so attn = %4d\n", s_servo [i].adj_attn);
-         return s_servo [i].adj_attn;
+         printf ("smallest qtr of top   (5/8), so attn = %4d\n", g_servo_data [i].adj_attn);
+         return g_servo_data [i].adj_attn;
       }
-      x_diff  = s_servo [i].adj_max  - s_servo [i].adj_attn;
+      x_diff  = g_servo_data [i].adj_max  - g_servo_data [i].adj_attn;
       x_start = a_angle - x_attn + x_qtr;
       x_pct   = x_start / (2.0 * x_qtr);
       printf ("x_range= %4d, x_qtr  = %4d, x_diff = %4d, x_start= %4d, x_pct  = %5.3f\n", x_range, x_qtr, x_diff, x_start, x_pct);
-      printf ("middle half of top    (6-7/8), so = %4d\n", s_servo [i].adj_attn + (int) (x_pct * x_diff));
-      return s_servo [i].adj_min + (int) (x_pct * x_diff);
+      printf ("middle half of top    (6-7/8), so = %4d\n", g_servo_data [i].adj_attn + (int) (x_pct * x_diff));
+      return g_servo_data [i].adj_min + (int) (x_pct * x_diff);
    }
    /*---(complete)-----------------------*/
    return 0;
@@ -721,26 +656,26 @@ pos_joint          (int a_port, int a_joint, int a_angle)
    if (a_joint == -1) printf ("---leg-------------  ---part--------  --  --  -req  -min  -max  -ang  flip  -adj  -fin\n");
    if (a_joint <  0        )      return -1;
    if (a_joint >= MAX_SERVO)      return -2;
-   if (s_servo[a_joint].leg == -1)  return -3;
+   if (g_servo_data[a_joint].leg == -1)  return -3;
    /*---(filter and limit)---------------*/
    x_adjust = adjust (a_joint, a_angle);
    i        = a_joint;
    x_angle  = a_angle;
-   if (x_angle  < s_servo [i].min)  x_angle = s_servo [i].min;
-   if (x_angle  > s_servo [i].max)  x_angle = s_servo [i].max;
-   x_flip  = (1500 + (x_angle - 1500) * s_servo [i].flip);
+   if (x_angle  < g_servo_data [i].min)  x_angle = g_servo_data [i].min;
+   if (x_angle  > g_servo_data [i].max)  x_angle = g_servo_data [i].max;
+   x_flip  = (1500 + (x_angle - 1500) * g_servo_data [i].flip);
    x_new   = x_flip + x_adjust;
    /*---(send command)-------------------*/
-   snprintf (buf, 1000, "#%d P%d\r"    , s_servo [a_joint].servo, x_new);
+   snprintf (buf, 1000, "#%d P%d\r"    , g_servo_data [a_joint].servo, x_new);
    write    (a_port, buf, strlen(buf));
    /*---(display debugging)--------------*/
    printf   ("#%d  %-15.15s  %-15.15s  %2d  %2d  ",
-         s_servo [a_joint].leg     , s_servo [a_joint].leg_name,
-         s_servo [a_joint].seg_name, a_joint                   ,
-         s_servo [a_joint].servo   );
+         g_servo_data [a_joint].leg     , g_servo_data [a_joint].leg_name,
+         g_servo_data [a_joint].seg_name, a_joint                   ,
+         g_servo_data [a_joint].servo   );
    printf   ("%4d  %4d  %4d  %4d  %4d  %4d  %4d\n",
          a_angle                   ,
-         s_servo [a_joint].min     , s_servo [a_joint].max     ,
+         g_servo_data [a_joint].min     , g_servo_data [a_joint].max     ,
          x_angle                   , x_flip                    ,
          x_adjust                  , x_new);
 

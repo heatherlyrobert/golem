@@ -58,8 +58,8 @@
 
 
 /* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5c"
-#define     VER_TXT   "moved communications functions to golem_comm.c"
+#define     VER_NUM   "0.5d"
+#define     VER_TXT   "moved servo data table to golem_data.c"
 
 
 
@@ -78,6 +78,32 @@
 #include    <yVIKEYS.h>           /* CUSTOM heatherly vi_keys standard        */
 #include    <ySTR.h>              /* CUSTOM heatherly string handling         */
 
+
+#define     MAX_SERVO   32
+#define     LEN_NAME    20
+typedef     struct cSERVO   tSERVO;
+struct cSERVO {
+   /*---(key info)----------*/
+   char        leg;
+   char        seg;
+   char        servo;
+   /*---(descriptive)-------*/
+   char        leg_name    [LEN_NAME];
+   char        leg_short   [LEN_NAME];
+   char        seg_name    [LEN_NAME];
+   char        seg_short   [LEN_NAME];
+   /*---(setup data)--------*/
+   int         adjust;
+   int         min;
+   int         attn;
+   int         max;
+   char        flip;
+   int         adj_min;
+   int         adj_attn;
+   int         adj_max;
+   char        min_dir    [LEN_NAME];
+};
+extern tSERVO      g_servo_data  [MAX_SERVO];
 
 
 
