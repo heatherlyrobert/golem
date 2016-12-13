@@ -898,13 +898,30 @@ test_exact         (void)
 int
 main     (int argc, char *argv[])
 {
-   int       rc        = 0;       /* generic return code                      */
-   int       i         = 0;
-   char      buf[500]  = "";
-   char     *a         = NULL;
+   int         rc          = 0;       /* generic return code                      */
+   int         i           = 0;
+   char        buf[500]    = "";
+   char       *a           = NULL;
+   double      x_len       = 0.0;
+   /*---(initialize)---------------------*/
+   if (rc == 0)  rc = PROG_logger  (argc, argv);
+   if (rc == 0)  rc = PROG_init    ();
+   if (rc == 0)  rc = PROG_urgs    (argc, argv);
+   if (rc == 0)  rc = PROG_args    (argc, argv);
+   if (rc == 0)  rc = PROG_begin   ();
+   if (rc != 0)  {
+      PROG_end     ();
+      exit (-1);
+   }
+   yKINE_script  (&x_len);
+   printf ("script length %8.3lf\n", x_len);
+   if (x_len <= 0.0) {
+   }
+      PROG_end     ();
+      exit (-2);
+   }
 
-   DATA_init ();
-   DATA_list ();
+   /*> DATA_list ();                                                                  <*/
 
    return 0;
 

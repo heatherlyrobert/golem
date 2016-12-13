@@ -67,7 +67,10 @@ PROG_logger        (int a_argc, char *a_argv[])
 char       /*----: very first setup ------------------s-----------------------*/
 PROG_init          (void)
 {
+   /*---(header)-------------------------*/
    DEBUG_TOPS   yLOG_enter (__FUNCTION__);
+   /*---(basics)-------------------------*/
+   DATA_init    ();
    /*---(complete)-----------------------*/
    DEBUG_TOPS   yLOG_exit  (__FUNCTION__);
    return 0;

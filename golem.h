@@ -58,8 +58,8 @@
 
 
 /* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5g"
-#define     VER_TXT   "added PROG functions from arachne and stripped to compile"
+#define     VER_NUM   "0.5h"
+#define     VER_TXT   "yKINE_script is now reading input script"
 
 
 
