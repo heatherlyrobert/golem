@@ -58,8 +58,8 @@
 
 
 /* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5f"
-#define     VER_TXT   "added debug data structure to prepare for industrial use ;)"
+#define     VER_NUM   "0.5g"
+#define     VER_TXT   "added PROG functions from arachne and stripped to compile"
 
 
 
@@ -77,6 +77,8 @@
 #include    <yKINE.h>             /* CUSTOM heatherly kinematics              */
 #include    <yVIKEYS.h>           /* CUSTOM heatherly vi_keys standard        */
 #include    <ySTR.h>              /* CUSTOM heatherly string handling         */
+#include    <ySTR.h>              /* CUSTOM heatherly string handling         */
+#include    <yLOG.h>              /* CUSTOM heatherly program logging         */
 
 
 
@@ -86,6 +88,19 @@
 typedef     struct      cDEBUG      tDEBUG;
 typedef     struct      cACCESSOR   tACCESSOR;
 
+
+
+/*===[[ RATIONAL LIMITS ]]====================================================*/
+/*   LEN_ is a length or size of something
+ *   MIN_ is a minimum count
+ *   DEF_ is a default count
+ *   MAX_ is a maximum count
+ *
+ */
+/*---(string length)------------------*/
+#define     LEN_RECD    2000
+#define     LEN_STR     200
+#define     LEN_LABEL   20
 
 
 /*===[[ DEBUGGING SETUP ]]====================================================*/
@@ -157,7 +172,6 @@ extern tDEBUG      debug;
 
 
 
-#define     LEN_LABEL   20
 typedef     struct cSERVO   tSERVO;
 struct cSERVO {
    /*---(key info)----------*/
@@ -186,6 +200,23 @@ extern tSERVO      g_servo_data  [YKINE_MAX_SERVO];
 
 char        DATA_init (void);
 char        DATA_list (void);
+
+
+
+
+/*---(arachne_main)----------------------*/
+int         main               (int argc, char *argv[]);
+
+/*---(arachne_prog)----------------------*/
+char        PROG_logger        (int argc, char *argv[]);
+char        PROG_init          (void);
+char        PROG_urgsmass      (char a_set, char a_extra);
+char        PROG_urgs          (int argc, char *argv[]);
+char        PROG_args          (int argc, char *argv[]);
+char        PROG_begin         (void);
+char        PROG_end           (void);
+
+
 
 
 #endif
