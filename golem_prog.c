@@ -3,8 +3,8 @@
 #include "golem.h"
 
 
-/*> tDEBUG      debug;                                                                <* 
- *> tACCESSOR   my;                                                                   <*/
+tDEBUG      debug;
+/*> tACCESSOR   my;                                                                   <*/
 
 
 

@@ -6,8 +6,9 @@
 
 int       x_port    = 0;       /* port file descriptor                     */
 
-#define   DEBUG_O   if (debug == 'y')
-char      debug     = '-';
+/*> char      debug     = '-';                                                        <* 
+ *> #define   DEBUG_O   if (debug == 'y')                                             <* 
+ *> char      debug     = '-';                                                        <*/
 
 
 #define   DEG2PTS    10
@@ -44,14 +45,14 @@ static void      o___SETUP___________________o (void) {;}
 #define    LM     4
 #define    LF     5
 
-char       leg_name[6][15] = {
-   "right-rear",
-   "right-middle",
-   "right-front",
-   "left-rear",
-   "left-middle",
-   "left-front"
-};
+/*> char       leg_name[6][15] = {                                                    <* 
+ *>    "right-rear",                                                                  <* 
+ *>    "right-middle",                                                                <* 
+ *>    "right-front",                                                                 <* 
+ *>    "left-rear",                                                                   <* 
+ *>    "left-middle",                                                                 <* 
+ *>    "left-front"                                                                   <* 
+ *> };                                                                                <*/
 
 char
 hex_move           (int a_port, int a_leg, int a_femur, int a_patella, int a_tibia, int a_msec)
@@ -164,7 +165,7 @@ hex_align_table    (int a_port)
    /*---(locals)-------------------------*/
    int       i         = 0;       /* loop iterator                            */
    char      buf[1000]   = "";
-   for (i = 0; i < MAX_SERVO; ++i) {
+   for (i = 0; i < YKINE_MAX_SERVO; ++i) {
       if (g_servo_data [i].leg <  0) continue;
       sprintf (buf, "#%-2d PO0\r", i);
       write(a_port, buf, strlen (buf));
@@ -655,7 +656,7 @@ pos_joint          (int a_port, int a_joint, int a_angle)
    /*---(title)--------------------------*/
    if (a_joint == -1) printf ("---leg-------------  ---part--------  --  --  -req  -min  -max  -ang  flip  -adj  -fin\n");
    if (a_joint <  0        )      return -1;
-   if (a_joint >= MAX_SERVO)      return -2;
+   if (a_joint >= YKINE_MAX_SERVO)      return -2;
    if (g_servo_data[a_joint].leg == -1)  return -3;
    /*---(filter and limit)---------------*/
    x_adjust = adjust (a_joint, a_angle);
@@ -734,7 +735,7 @@ char
 pose_attn          (void)
 {
    int       i         = 0;       /* loop iterator                            */
-   for (i = -1; i < MAX_SERVO; ++i) {
+   for (i = -1; i < YKINE_MAX_SERVO; ++i) {
       pos_joint   (x_port, i, 1500);
    }
    return 0;
@@ -763,7 +764,7 @@ pose_fixed         (int a_femu, int a_pate, int a_tibi)
 {
    int       i         = 0;       /* loop iterator                            */
    pos_joint (x_port, -1, 0);
-   for (i = -1; i < MAX_SERVO; ++i) {
+   for (i = -1; i < YKINE_MAX_SERVO; ++i) {
       switch (i % 4) {
       case 0 : pos_joint   (x_port, i, a_femu);
                break;
@@ -781,7 +782,7 @@ char
 pose_fmax          (void)
 {
    int       i         = 0;       /* loop iterator                            */
-   for (i = -1; i < MAX_SERVO; ++i) {
+   for (i = -1; i < YKINE_MAX_SERVO; ++i) {
       switch (i % 4) {
       case 0 : pos_joint   (x_port, i, 1500);
                break;
@@ -848,7 +849,7 @@ test_exact_table   (void)
 {
    int       i         = 0;       /* loop iterator                            */
    int       a_msec    =  500;
-   /*> for (i = -1; i < MAX_SERVO; ++i) {                                             <* 
+   /*> for (i = -1; i < YKINE_MAX_SERVO; ++i) {                                             <* 
     *>    switch (i % 4) {                                                            <* 
     *>    case 0 : pos_joint   (x_port, i, 1500);                                     <* 
     *>             break;                                                             <* 
