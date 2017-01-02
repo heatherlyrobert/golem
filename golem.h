@@ -58,20 +58,21 @@
 
 
 /* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5h"
-#define     VER_TXT   "yKINE_script is now reading input script"
+#define     VER_NUM   "0.5i"
+#define     VER_TXT   "added ik_pure and ik_from, fixed flipping"
 
 
 
 /*===[[ library headers -- standard ]]========================================*/
-#include   <stdio.h>              /* clibc standard input/output              */
-#include   <stdlib.h>             /* clibc standard                           */
-#include   <string.h>             /* clibc standard string handling           */
-#include   <unistd.h>             /* clibc standard unix interface            */
-#include   <error.h>              /* clibc standard error handling            */
-#include   <fcntl.h>              /* clibc standard file control              */
-#include   <termios.h>            /* clibc standard terminal control          */
-#include   <math.h>               /* clibc standard math                      */
+#include    <stdio.h>             /* clibc standard input/output              */
+#include    <stdlib.h>            /* clibc standard                           */
+#include    <string.h>            /* clibc standard string handling           */
+#include    <unistd.h>            /* clibc standard unix interface            */
+#include    <error.h>             /* clibc standard error handling            */
+#include    <fcntl.h>             /* clibc standard file control              */
+#include    <termios.h>           /* clibc standard terminal control          */
+#include    <math.h>              /* clibc standard math                      */
+#include    <time.h>              /* CLIBC  standard time and date handling   */
 
 /*---(heatherly made)--------------------*/
 #include    <yKINE.h>             /* CUSTOM heatherly kinematics              */
@@ -84,6 +85,16 @@
 
 /*===[[ TYPEDEFS ]]===========================================================*/
 /*---(basics)--------------------------*/
+typedef     unsigned    char        uchar;
+typedef     const       char        cchar;
+typedef     unsigned    short       ushort;
+typedef     const       int         cint;
+typedef     unsigned    long        ulong;
+typedef     unsigned    long long   ullong;
+/*---(library simplifications)---------*/
+typedef     struct      FILE        tFILE;
+typedef     struct      tm          tTIME;
+typedef     struct      timespec    tTSPEC;
 /*---(data structures)-----------------*/
 typedef     struct      cDEBUG      tDEBUG;
 typedef     struct      cACCESSOR   tACCESSOR;
@@ -140,6 +151,7 @@ struct cDEBUG
    char        data_mas;               /* D) complex data structure (more)    */
    char        envi;                   /* e) environment processing           */
    /*---(specific)-----------------------*/
+   char        kine;                   /* -) specialty kinematics testing     */
    /*---(done)---------------------------*/
 };
 extern tDEBUG      debug;
@@ -170,6 +182,16 @@ extern tDEBUG      debug;
 
 
 
+struct cACCESSOR {
+   /*---(progress move)------------------*/
+   double      p_waitns;
+   /*---(flags)--------------------------*/
+   char        noadj;
+   /*---(done)---------------------------*/
+};
+extern      tACCESSOR my;
+
+
 
 
 typedef     struct cSERVO   tSERVO;
@@ -178,12 +200,14 @@ struct cSERVO {
    char        leg;
    char        seg;
    char        servo;
+   char        ykine;
    /*---(descriptive)-------*/
    char        leg_name    [LEN_LABEL];
    char        leg_short   [LEN_LABEL];
    char        seg_name    [LEN_LABEL];
    char        seg_short   [LEN_LABEL];
    /*---(setup data)--------*/
+   double      zero;
    int         min;
    int         attn;
    int         max;
@@ -198,8 +222,9 @@ struct cSERVO {
 };
 extern tSERVO      g_servo_data  [YKINE_MAX_SERVO];
 
-char        DATA_init (void);
-char        DATA_list (void);
+char        DATA_init          (void);
+char        DATA_list          (void);
+char        DATA_find          (int a_leg, int a_seg);
 
 
 

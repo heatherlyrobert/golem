@@ -4,7 +4,7 @@
 
 
 tDEBUG      debug;
-/*> tACCESSOR   my;                                                                   <*/
+tACCESSOR   my;
 
 
 
@@ -70,7 +70,9 @@ PROG_init          (void)
    /*---(header)-------------------------*/
    DEBUG_TOPS   yLOG_enter (__FUNCTION__);
    /*---(basics)-------------------------*/
+   DEBUG_TOPS   yLOG_note  ("load description tables from yKINE");
    DATA_init    ();
+   my.noadj     = '-';
    /*---(complete)-----------------------*/
    DEBUG_TOPS   yLOG_exit  (__FUNCTION__);
    return 0;
@@ -107,7 +109,7 @@ PROG_urgsmass      (char a_set, char a_extra)
    debug.envi     = a_set;
    /*---(specific)-----------------------*/
    if (a_extra == 'y') {
-      ;;
+      debug.kine   = a_set;
    }
    /*---(complete)-----------------------*/
    return 0;
@@ -133,42 +135,42 @@ PROG_urgs          (int argc, char *argv[])
       /* this is my latest standard format, vars, and urgents                 */
       /* v3.0b : added signal handling                          (2014-feb-01) */
       /*---(overall)---------------------*/
-      if      (strncmp(a, "@t"      ,10) == 0)    debug.tops = 'y';
-      else if (strncmp(a, "@@top"   ,10) == 0)    debug.tops = 'y';
-      else if (strncmp(a, "@s"      ,10) == 0)    debug.tops = debug.summ  = 'y';
-      else if (strncmp(a, "@@summ"  ,10) == 0)    debug.tops = debug.summ  = 'y';
+      if      (strncmp(a, "@t"        ,10) == 0)    debug.tops = 'y';
+      else if (strncmp(a, "@@top"     ,10) == 0)    debug.tops = 'y';
+      else if (strncmp(a, "@s"        ,10) == 0)    debug.tops = debug.summ  = 'y';
+      else if (strncmp(a, "@@summ"    ,10) == 0)    debug.tops = debug.summ  = 'y';
       /*---(startup/shutdown)------------*/
-      else if (strncmp(a, "@a"      ,10) == 0)    debug.tops = debug.args  = 'y';
-      else if (strncmp(a, "@@args"  ,10) == 0)    debug.tops = debug.args  = 'y';
-      else if (strncmp(a, "@c"      ,10) == 0)    debug.tops = debug.conf  = 'y';
-      else if (strncmp(a, "@@conf"  ,10) == 0)    debug.tops = debug.conf  = 'y';
-      else if (strncmp(a, "@p"      ,10) == 0)    debug.tops = debug.prog  = 'y';
-      else if (strncmp(a, "@@prog"  ,10) == 0)    debug.tops = debug.prog  = 'y';
+      else if (strncmp(a, "@a"        ,10) == 0)    debug.tops = debug.args  = 'y';
+      else if (strncmp(a, "@@args"    ,10) == 0)    debug.tops = debug.args  = 'y';
+      else if (strncmp(a, "@c"        ,10) == 0)    debug.tops = debug.conf  = 'y';
+      else if (strncmp(a, "@@conf"    ,10) == 0)    debug.tops = debug.conf  = 'y';
+      else if (strncmp(a, "@p"        ,10) == 0)    debug.tops = debug.prog  = 'y';
+      else if (strncmp(a, "@@prog"    ,10) == 0)    debug.tops = debug.prog  = 'y';
       /*---(text files)------------------*/
-      else if (strncmp(a, "@i"      ,10) == 0)    debug.tops = debug.inpt  = 'y';
-      else if (strncmp(a, "@@inpt"  ,10) == 0)    debug.tops = debug.inpt  = 'y';
-      else if (strncmp(a, "@o"      ,10) == 0)    debug.tops = debug.outp  = 'y';
-      else if (strncmp(a, "@@outp"  ,10) == 0)    debug.tops = debug.outp  = 'y';
+      else if (strncmp(a, "@i"        ,10) == 0)    debug.tops = debug.inpt  = 'y';
+      else if (strncmp(a, "@@inpt"    ,10) == 0)    debug.tops = debug.inpt  = 'y';
+      else if (strncmp(a, "@o"        ,10) == 0)    debug.tops = debug.outp  = 'y';
+      else if (strncmp(a, "@@outp"    ,10) == 0)    debug.tops = debug.outp  = 'y';
       /*---(processing)------------------*/
-      else if (strncmp(a, "@l"      ,10) == 0)    debug.tops = debug.loop  = 'y';
-      else if (strncmp(a, "@@loop"  ,10) == 0)    debug.tops = debug.loop  = 'y';
-      else if (strncmp(a, "@u"      ,10) == 0)    debug.tops = debug.user  = 'y';
-      else if (strncmp(a, "@@user"  ,10) == 0)    debug.tops = debug.user  = 'y';
-      else if (strncmp(a, "@i"      ,10) == 0)    debug.tops = debug.apis  = 'y';
-      else if (strncmp(a, "@@apis"  ,10) == 0)    debug.tops = debug.apis  = 'y';
-      else if (strncmp(a, "@x"      ,10) == 0)    debug.tops = debug.sign  = 'y';
-      else if (strncmp(a, "@@sign"  ,10) == 0)    debug.tops = debug.sign  = 'y';
-      else if (strncmp(a, "@b"      ,10) == 0)    debug.tops = debug.scrp  = 'y';
-      else if (strncmp(a, "@@scrp"  ,10) == 0)    debug.tops = debug.scrp  = 'y';
-      else if (strncmp(a, "@h"      ,10) == 0)    debug.tops = debug.hist  = 'y';
-      else if (strncmp(a, "@@hist"  ,10) == 0)    debug.tops = debug.hist  = 'y';
+      else if (strncmp(a, "@l"        ,10) == 0)    debug.tops = debug.loop  = 'y';
+      else if (strncmp(a, "@@loop"    ,10) == 0)    debug.tops = debug.loop  = 'y';
+      else if (strncmp(a, "@u"        ,10) == 0)    debug.tops = debug.user  = 'y';
+      else if (strncmp(a, "@@user"    ,10) == 0)    debug.tops = debug.user  = 'y';
+      else if (strncmp(a, "@i"        ,10) == 0)    debug.tops = debug.apis  = 'y';
+      else if (strncmp(a, "@@apis"    ,10) == 0)    debug.tops = debug.apis  = 'y';
+      else if (strncmp(a, "@x"        ,10) == 0)    debug.tops = debug.sign  = 'y';
+      else if (strncmp(a, "@@sign"    ,10) == 0)    debug.tops = debug.sign  = 'y';
+      else if (strncmp(a, "@b"        ,10) == 0)    debug.tops = debug.scrp  = 'y';
+      else if (strncmp(a, "@@scrp"    ,10) == 0)    debug.tops = debug.scrp  = 'y';
+      else if (strncmp(a, "@h"        ,10) == 0)    debug.tops = debug.hist  = 'y';
+      else if (strncmp(a, "@@hist"    ,10) == 0)    debug.tops = debug.hist  = 'y';
       /*---(program)---------------------*/
-      else if (strncmp(a, "@g"      ,10) == 0)    debug.tops = debug.graf  = 'y';
-      else if (strncmp(a, "@@graf"  ,10) == 0)    debug.tops = debug.graf  = 'y';
-      else if (strncmp(a, "@d"      ,10) == 0)    debug.tops = debug.data  = 'y';
-      else if (strncmp(a, "@@data"  ,10) == 0)    debug.tops = debug.data  = 'y';
-      else if (strncmp(a, "@e"      ,10) == 0)    debug.tops = debug.envi  = 'y';
-      else if (strncmp(a, "@@envi"  ,10) == 0)    debug.tops = debug.envi  = 'y';
+      else if (strncmp(a, "@g"        ,10) == 0)    debug.tops = debug.graf  = 'y';
+      else if (strncmp(a, "@@graf"    ,10) == 0)    debug.tops = debug.graf  = 'y';
+      else if (strncmp(a, "@d"        ,10) == 0)    debug.tops = debug.data  = 'y';
+      else if (strncmp(a, "@@data"    ,10) == 0)    debug.tops = debug.data  = 'y';
+      else if (strncmp(a, "@e"        ,10) == 0)    debug.tops = debug.envi  = 'y';
+      else if (strncmp(a, "@@envi"    ,10) == 0)    debug.tops = debug.envi  = 'y';
       /*---(big options)-----------------*/
       else if (strncmp(a, "@q"        ,10) == 0)  PROG_urgsmass ('-', 'y');
       else if (strncmp(a, "@@quiet"   ,10) == 0)  PROG_urgsmass ('-', 'y');
@@ -177,6 +179,10 @@ PROG_urgs          (int argc, char *argv[])
       else if (strncmp(a, "@k"        ,10) == 0)  PROG_urgsmass ('y', 'y');
       else if (strncmp(a, "@@kitchen" ,10) == 0)  PROG_urgsmass ('y', 'y');
       /*---(special)---------------------*/
+      else if (strncmp(a, "@@kine"    ,10) == 0){
+         debug.tops = debug.kine  = 'y';
+         yKINE_debug ('A');
+      }
       /*---(done)------------------------*/
    }
    DEBUG_ARGS  yLOG_note   ("summarization of urgent processing");
@@ -203,6 +209,7 @@ PROG_urgs          (int argc, char *argv[])
    DEBUG_ARGS  yLOG_char   ("@d,@@data"  , debug.data);
    DEBUG_ARGS  yLOG_char   ("@D,@@DATA"  , debug.data_mas);
    DEBUG_ARGS  yLOG_char   ("@e,@@envi"  , debug.envi);
+   DEBUG_ARGS  yLOG_char   ("@@kine"     , debug.kine);
    /*---(complete)-----------------------*/
    DEBUG_TOPS  yLOG_exit  (__FUNCTION__);
    return 0;
@@ -224,6 +231,7 @@ PROG_args          (int argc, char *argv[])
       if (a[0] == '@')  continue;
       DEBUG_ARGS  yLOG_info    ("cli arg", a);
       ++x_args;
+      if      (strcmp(a, "--noadj"      ) == 0)  my.noadj = 'y';
       /*> if      (strcmp(a, "--play"       ) == 0)  yVIKEYS_speed_play   (&my.p_waitns);   <* 
        *> else if (strcmp(a, "--pause"      ) == 0)  yVIKEYS_speed_stop   (&my.p_waitns);   <* 
        *> else if (strcmp(a, "--quit"       ) == 0)  my.p_quit = 'y';                       <* 

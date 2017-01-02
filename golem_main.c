@@ -586,10 +586,13 @@ adjust             (int a_joint, int a_angle)
    int       x_diff      =  0;
    int       x_start     =  0;
    float     x_pct       =  0;
+   /*---(defenses)-----------------------*/
+   if (my.noadj == 'y') {
+      return 0;
+   }
    /*---(prepare)------------------------*/
-   printf ("\n");
-   printf ("focu   = %4d, angle  = %4d\n", i, a_angle);
    i      = a_joint;
+   printf ("focu   = %4d, angle  = %4d, %-12.12s, %-10.10s\n", i, a_angle, g_servo_data [i].leg_name, g_servo_data [i].seg_name);
    x_min  = g_servo_data [i].min;
    x_attn = g_servo_data [i].attn;
    x_max  = g_servo_data [i].max;
@@ -659,11 +662,11 @@ pos_joint          (int a_port, int a_joint, int a_angle)
    if (a_joint >= YKINE_MAX_SERVO)      return -2;
    if (g_servo_data[a_joint].leg == -1)  return -3;
    /*---(filter and limit)---------------*/
-   x_adjust = adjust (a_joint, a_angle);
    i        = a_joint;
    x_angle  = a_angle;
    if (x_angle  < g_servo_data [i].min)  x_angle = g_servo_data [i].min;
    if (x_angle  > g_servo_data [i].max)  x_angle = g_servo_data [i].max;
+   x_adjust = adjust (a_joint, a_angle);
    x_flip  = (1500 + (x_angle - 1500) * g_servo_data [i].flip);
    x_new   = x_flip + x_adjust;
    /*---(send command)-------------------*/
@@ -689,11 +692,33 @@ move_joint         (int a_port, int a_joint, int a_angle, int a_msec)
 {
    /*---(locals)-------------------------*/
    char      buf[1000]   = "";
+   int       x_adjust    =  0;
+   int       x_angle     =  0;
+   int       x_flip      =  0;
+   int       x_new       =  0;
+   int       i           =  0;
+   /*---(filter and limit)---------------*/
+   i        = a_joint;
+   x_angle  = a_angle;
+   printf ("move_joint, joint = %1d, angle = %4d, msec = %4d\n", i, x_angle, a_msec);
+   if (x_angle  < g_servo_data [i].min) {
+      x_angle = g_servo_data [i].min;
+      printf ("angle too small, adjusted to %4d\n", x_angle);
+   }
+   if (x_angle  > g_servo_data [i].max) {
+      x_angle = g_servo_data [i].max;
+      printf ("angle too large, adjusted to %4d\n", x_angle);
+   }
+   x_adjust = adjust (i, x_angle);
+   printf ("ADJUSTING %d\n", x_adjust);
+   x_flip  = (1500 + (x_angle - 1500) * g_servo_data [i].flip);
+   /*> x_flip  = x_angle;                                                             <*/
+   x_new   = x_flip + x_adjust;
    /*---(send command)-------------------*/
-   snprintf (buf, 1000, "#%d P%d T%d\r", a_joint, a_angle, a_msec);
-   printf ("%s\n", buf);
+   snprintf (buf, 1000, "#%d P%d T%d\r", g_servo_data [i].servo, x_new, a_msec);
+   printf ("%s\n\n", buf);
    write  (a_port, buf, strlen(buf));
-   usleep (a_msec * 1000);
+   /*> usleep (a_msec * 1000);                                                        <*/
    /*---(complete)-----------------------*/
    return 0;
 }
@@ -898,11 +923,31 @@ test_exact         (void)
 int
 main     (int argc, char *argv[])
 {
-   int         rc          = 0;       /* generic return code                      */
+   char        rc          = 0;       /* generic return code                      */
+   char        rc2         = 0;       /* generic return code                      */
    int         i           = 0;
+   int         j           = 0;
    char        buf[500]    = "";
    char       *a           = NULL;
-   double      x_len       = 0.0;
+   tTSPEC      timer;
+   double      x_len       = 0.00;
+   double      x_sec       = 0.00;
+   double      x_secb      = 0.00;
+   double      x_sece      = 0.00;
+   double      x_dur       = 0.00;
+   double      x_degb      = 0.00;
+   double      x_dege      = 0.00;
+   double      x_zero      = 0.00;
+   int         x_seq       = -1;
+   int         x_line      = -1;
+   int         x_index     = -1;
+   int         x_servo     = -1;
+   char        x_label     [LEN_LABEL];
+   char        x_leg       [LEN_LABEL];
+   char        x_seg       [LEN_LABEL];
+   char        x_rc        = '-';
+   char        x_rc2       = '-';
+   int         c           = 0;
    /*---(initialize)---------------------*/
    if (rc == 0)  rc = PROG_logger  (argc, argv);
    if (rc == 0)  rc = PROG_init    ();
@@ -913,16 +958,155 @@ main     (int argc, char *argv[])
       PROG_end     ();
       exit (-1);
    }
+   yKINE_init      (0);
+   yKINE_center    (0.0, 0.0, 0.0);
    yKINE_script  (&x_len);
+   yKINE_moves_rpt ();
+   DATA_list ();
    printf ("script length %8.3lf\n", x_len);
    if (x_len <= 0.0) {
-   }
       PROG_end     ();
       exit (-2);
    }
 
-   /*> DATA_list ();                                                                  <*/
 
+   /*---(show)-----------------------------------------*/
+   /*> for (i = YKINE_RR; i <= YKINE_LR; ++i) {                                                                                                                  <* 
+    *>    /+> printf ("leg %d\n", i);                                                     <+/                                                                    <* 
+    *>    for (j = YKINE_FEMU; j <= YKINE_TIBI; ++j) {                                                                                                           <* 
+    *>       /+> printf ("seg %d\n", j);                                                  <+/                                                                    <* 
+    *>       c = 0;                                                                                                                                              <* 
+    *>       for (x_sec = 0.00; x_sec < x_len; x_sec += 0.01) {                                                                                                  <* 
+    *>          x_index = DATA_find  (i, j);                                                                                                                     <* 
+    *>          if (x_index < 0)  continue;                                                                                                                      <* 
+    *>          x_servo = g_servo_data [x_index].ykine;                                                                                                          <* 
+    *>          if (x_servo < 0)  continue;                                                                                                                      <* 
+    *>          rc = yKINE_move_curone (x_servo, x_sec);                                                                                                         <* 
+    *>          if      (rc  < 0)  x_rc  = '?';                                                                                                                  <* 
+    *>          else if (rc  > 0)  x_rc  = 'y';                                                                                                                  <* 
+    *>          else               x_rc  = '-';                                                                                                                  <* 
+    *>          strlcpy (x_leg, g_servo_data [x_index].leg_name, LEN_LABEL);                                                                                     <* 
+    *>          strlcpy (x_seg, g_servo_data [x_index].seg_name, LEN_LABEL);                                                                                     <* 
+    *>          rc2     = yKINE_servo_move   (i, j, x_label, &x_secb, &x_sece, &x_dur , &x_degb, &x_dege, &x_seq, &x_line);                                      <* 
+    *>          if      (rc2 < 0)  x_rc2 = '?';                                                                                                                  <* 
+    *>          else if (rc2 > 0)  x_rc2 = 'y';                                                                                                                  <* 
+    *>          else               x_rc2 = '-';                                                                                                                  <* 
+    *>          /+> printf ("x_servo = %d, leg=%-12.12s, seg=%-10.10s, rc=%2d, rc2=%2d\n", x_servo, x_leg, x_seg, rc, rc2);   <+/                                <* 
+    *>          if (rc2 > 0) {                                                                                                                                   <* 
+    *>             if ( c      == 0) {                                                                                                                           <* 
+    *>                if (j == YKINE_FEMU)  printf ("%-12.12s ====================================================================================\n", x_leg);   <* 
+    *>                printf ("   %-10.10s - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n", x_seg);                       <* 
+    *>             }                                                                                                                                             <* 
+    *>             if ((c % 5) == 0)  printf ("   --secs-- - -    ----beg- ----end- ----dur-    ---label----    --degb-- --dege--    -seq- -rec-\n");            <* 
+    *>             printf ("   ");                                                                                                                               <* 
+    *>             printf ("%8.3lf %c %c    %8.3lf %8.3lf %8.3lf", x_sec, x_rc, x_rc2, x_secb, x_sece, x_dur);                                                   <* 
+    *>             printf ("    %-12.12s"                  , x_label);                                                                                           <* 
+    *>             printf ("    %8.1lf %8.1lf"             , x_degb, x_dege);                                                                                    <* 
+    *>             printf ("    %5d %5d\n"                , x_seq, x_line);                                                                                      <* 
+    *>             ++c;                                                                                                                                          <* 
+    *>          }                                                                                                                                                <* 
+    *>       }                                                                                                                                                   <* 
+    *>       printf ("\n\n");                                                                                                                                    <* 
+    *>    }                                                                                                                                                      <* 
+    *> }                                                                                                                                                         <*/
+   /*> printf ("\n");                                                              <*/
+
+   /*> while (1) {                                                                              <* 
+    *>    /+---(wait)-----------------------------------------+/                                <* 
+    *>    yKINE_move_curall (x_sec);                                                            <* 
+    *>    for (i = YKINE_RR; i <= YKINE_LR; ++i) {                                              <* 
+    *>       for (j = YKINE_FEMU; j <= YKINE_TIBI; ++j) {                                       <* 
+    *>          rc = yKINE_servo_deg (i, j, &x_deg);                                            <* 
+    *>          if (rc > 0) {                                                                   <* 
+    *>             printf ("%8.3lf", x_sec);                                                    <* 
+    *>             printf ("  %d  %d", i, j);                                                   <* 
+    *>             printf ("  %c  %8.1lf\n", (rc == 0) ? '-' : 'y', x_deg);                     <* 
+    *>          }                                                                               <* 
+    *>       }                                                                                  <* 
+    *>    }                                                                                     <* 
+    *>    /+> printf ("\n");                                                              <+/   <* 
+    *>    x_sec += 0.01;                                                                        <* 
+    *>    timer.tv_sec  = 0;                                                                    <* 
+    *>    timer.tv_nsec = 10000000;   /+   0.01 sec  +/                                         <* 
+    *>    nanosleep (&timer, NULL);                                                             <* 
+    *>    if (x_sec > x_len) break;                                                             <* 
+    *> }                                                                                        <*/
+
+
+   /*> while (1) {                                                                    <* 
+    *>    /+---(wait)-----------------------------------------+/                      <* 
+    *>    yKINE_move_curall (x_sec);                                                  <* 
+    *>    printf ("%8.3lf", x_sec);                                                   <* 
+    *>    for (i = YKINE_RR; i <= YKINE_LR; ++i) {                                    <* 
+    *>       for (j = YKINE_FEMU; j <= YKINE_TIBI; ++j) {                             <* 
+    *>          rc = yKINE_servo_deg (i, j, &x_deg);                                  <* 
+    *>          printf ("  %c %8.1lf", (rc == 0) ? '-' : 'y', x_deg);                 <* 
+    *>       }                                                                        <* 
+    *>    }                                                                           <* 
+    *>    printf ("\n");                                                              <* 
+    *>    x_sec += 0.01;                                                              <* 
+    *>    timer.tv_sec  = 0;                                                          <* 
+    *>    timer.tv_nsec = 10000000;   /+   0.01 sec  +/                               <* 
+    *>    nanosleep (&timer, NULL);                                                   <* 
+    *>    if (x_sec > x_len) break;                                                   <* 
+    *> }                                                                              <*/
+
+   x_port = COMM_open ("/dev/usb/ttyUSB0");
+   hex_align_table  (x_port);
+   /*> bulldog ();                                                                    <*/
+   for (x_sec = 0.00; x_sec < x_len; x_sec += 0.01) {
+      c = 0;
+      /*---(cycle legs)------------------*/
+      for (i = YKINE_RR; i <= YKINE_LR; ++i) {
+         /*---(cycle segments)-----------*/
+         for (j = YKINE_FEMU; j <= YKINE_TIBI; ++j) {
+            /*---(check)-----------------*/
+            x_index = DATA_find  (i, j);
+            if (x_index < 0)  continue;
+            x_servo = g_servo_data [x_index].ykine;
+            x_zero  = g_servo_data [x_index].zero;
+            if (x_servo < 0)  continue;
+            /*---(set current)-----------*/
+            rc = yKINE_move_curone (x_servo, x_sec);
+            if      (rc  < 0)  x_rc  = '?';
+            else if (rc  > 0)  x_rc  = 'y';
+            else               x_rc  = '-';
+            strlcpy (x_leg, g_servo_data [x_index].leg_name, LEN_LABEL);
+            strlcpy (x_seg, g_servo_data [x_index].seg_name, LEN_LABEL);
+            /*---(get position)----------*/
+            rc2     = yKINE_servo_move   (i, j, x_label, &x_secb, &x_sece, &x_dur , &x_degb, &x_dege, &x_seq, &x_line);
+            if      (rc2 < 0)  x_rc2 = '?';
+            else if (rc2 > 0)  x_rc2 = 'y';
+            else               x_rc2 = '-';
+            /*> printf ("x_servo = %d, leg=%-12.12s, seg=%-10.10s, rc=%2d, rc2=%2d\n", x_servo, x_leg, x_seg, rc, rc2);   <*/
+            if (rc2 > 0) {
+               /*> if (i == 3) {                                                      <*/
+                  if ((c % 45) == 0)  printf ("\n   --secs-- - -    - ---leg------ - ---seg----    ----beg- ----end- ----dur-    ---label----    --degb-- --dege--    -seq- -rec-\n");
+                  if ((c %  5) == 0)  printf ("\n");
+                  printf ("   ");
+                  printf ("%8.3lf %c %c"                  , x_sec, x_rc, x_rc2);
+                  printf ("    %1d %-12.12s %1d %-10.10s" , i, x_leg, j, x_seg);
+                  printf ("    %8.3lf %8.3lf %8.3lf"      , x_secb, x_sece, x_dur);
+                  printf ("    %-12.12s"                  , x_label);
+                  printf ("    %8.1lf %8.1lf"             , x_degb, x_dege);
+                  printf ("    %5d %5d\n"                 , x_seq, x_line);
+                  printf ("send #%02d P%d T%d\n", g_servo_data [x_index].servo, (int) (1500 + ((x_dege - x_zero) * 10.0)), (int) (x_dur * 1000.0));
+                  move_joint         (x_port, x_index, (int) (1500 + ((x_dege - x_zero) * 10.0)), (int) (x_dur * 1000.0));
+               /*> }                                                                  <*/
+               ++c;
+            }
+         }
+      }
+      /*---(sleep)-----------------------*/
+      timer.tv_sec  = 0;
+      /*> timer.tv_nsec = 50000000;                                                   <*/
+      timer.tv_nsec = 10000000;
+      nanosleep (&timer, NULL);
+      /*---(done)------------------------*/
+      /*> if (x_sec > 4.000)  break;                                                  <*/
+   }
+   printf ("\n\n\nDONE DONE\n\n\n");
+   COMM_close (x_port);
    return 0;
 
 
