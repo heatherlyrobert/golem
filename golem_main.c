@@ -573,78 +573,6 @@ scripter           (void)
    return 0;
 }
 
-int
-adjust             (int a_joint, int a_angle)
-{
-   /*---(locals)-------------------------*/
-   int       i           =  0;
-   int       x_min       =  0;
-   int       x_attn      =  0;
-   int       x_max       =  0;
-   int       x_range     =  0;
-   int       x_qtr       =  0;
-   int       x_diff      =  0;
-   int       x_start     =  0;
-   float     x_pct       =  0;
-   /*---(defenses)-----------------------*/
-   if (my.noadj == 'y') {
-      return 0;
-   }
-   /*---(prepare)------------------------*/
-   i      = a_joint;
-   printf ("focu   = %4d, angle  = %4d, %-12.12s, %-10.10s\n", i, a_angle, g_servo_data [i].leg_name, g_servo_data [i].seg_name);
-   x_min  = g_servo_data [i].min;
-   x_attn = g_servo_data [i].attn;
-   x_max  = g_servo_data [i].max;
-   printf ("x_min  = %4d, x_attn = %4d, x_max  = %4d\n", x_min, x_attn, x_max);
-   printf ("adj_m  = %4d, adj_a  = %4d, adj_x  = %4d\n", g_servo_data[i].adj_min, g_servo_data[i].adj_attn, g_servo_data[i].adj_max);
-   /*---(figure)-------------------------*/
-   if (a_angle == x_attn) {
-      printf ("EQUAL to attention\n");
-      printf ("middle,                      so attn = %4d\n", g_servo_data [i].adj_attn);
-      return g_servo_data [i].adj_attn;
-   }
-   if (a_angle <= x_attn) {
-      printf ("LESSER than attention\n");
-      x_range = (x_attn - x_min);
-      x_qtr   = x_range / 4.0;
-      if (a_angle <= x_min  + x_qtr) {
-         printf ("smallest qtr of bottom (1/8), so min  = %4d\n", g_servo_data [i].adj_min);
-         return g_servo_data [i].adj_min;
-      }
-      if (a_angle >= x_attn - x_qtr) {
-         printf ("largest qtr of bottom (4/8),  so attn = %4d\n", g_servo_data [i].adj_attn);
-         return g_servo_data [i].adj_attn;
-      }
-      x_diff  = g_servo_data [i].adj_attn - g_servo_data [i].adj_min;
-      x_start = a_angle - x_min - x_qtr;
-      x_pct   = x_start / (2.0 * x_qtr);
-      printf ("x_range= %4d, x_qtr  = %4d, x_diff = %4d, x_start= %4d, x_pct  = %5.3f\n", x_range, x_qtr, x_diff, x_start, x_pct);
-      printf ("middle half of bottom (2-3/8), so = %4d\n", g_servo_data [i].adj_min  + (int) (x_pct * x_diff));
-      return g_servo_data [i].adj_min + (int) (x_pct * x_diff);
-   } else {
-      printf ("GREATER than attention\n");
-      x_range = (x_max  - x_attn);
-      x_qtr   = x_range / 4.0;
-      if (a_angle >= x_max  - x_qtr) {
-         printf ("largest qtr of top    (8/8), so max  = %4d\n", g_servo_data [i].adj_max);
-         return g_servo_data [i].adj_max;
-      }
-      if (a_angle <= x_attn + x_qtr) {
-         printf ("smallest qtr of top   (5/8), so attn = %4d\n", g_servo_data [i].adj_attn);
-         return g_servo_data [i].adj_attn;
-      }
-      x_diff  = g_servo_data [i].adj_max  - g_servo_data [i].adj_attn;
-      x_start = a_angle - x_attn + x_qtr;
-      x_pct   = x_start / (2.0 * x_qtr);
-      printf ("x_range= %4d, x_qtr  = %4d, x_diff = %4d, x_start= %4d, x_pct  = %5.3f\n", x_range, x_qtr, x_diff, x_start, x_pct);
-      printf ("middle half of top    (6-7/8), so = %4d\n", g_servo_data [i].adj_attn + (int) (x_pct * x_diff));
-      return g_servo_data [i].adj_min + (int) (x_pct * x_diff);
-   }
-   /*---(complete)-----------------------*/
-   return 0;
-}
-
 char
 pos_joint          (int a_port, int a_joint, int a_angle)
 {
@@ -666,7 +594,7 @@ pos_joint          (int a_port, int a_joint, int a_angle)
    x_angle  = a_angle;
    if (x_angle  < g_servo_data [i].min)  x_angle = g_servo_data [i].min;
    if (x_angle  > g_servo_data [i].max)  x_angle = g_servo_data [i].max;
-   x_adjust = adjust (a_joint, a_angle);
+   x_adjust = DATA_adjust (a_joint, a_angle);
    x_flip  = (1500 + (x_angle - 1500) * g_servo_data [i].flip);
    x_new   = x_flip + x_adjust;
    /*---(send command)-------------------*/
@@ -709,7 +637,7 @@ move_joint         (int a_port, int a_joint, int a_angle, int a_msec)
       x_angle = g_servo_data [i].max;
       printf ("angle too large, adjusted to %4d\n", x_angle);
    }
-   x_adjust = adjust (i, x_angle);
+   x_adjust = DATA_adjust (i, x_angle);
    printf ("ADJUSTING %d\n", x_adjust);
    x_flip  = (1500 + (x_angle - 1500) * g_servo_data [i].flip);
    /*> x_flip  = x_angle;                                                             <*/
@@ -949,9 +877,9 @@ main     (int argc, char *argv[])
    char        x_rc2       = '-';
    int         c           = 0;
    /*---(initialize)---------------------*/
-   if (rc == 0)  rc = PROG_logger  (argc, argv);
+   if (rc == 0)  rc = yURG_logger  (argc, argv);
    if (rc == 0)  rc = PROG_init    ();
-   if (rc == 0)  rc = PROG_urgs    (argc, argv);
+   if (rc == 0)  rc = yURG_urgs    (argc, argv);
    if (rc == 0)  rc = PROG_args    (argc, argv);
    if (rc == 0)  rc = PROG_begin   ();
    if (rc != 0)  {
@@ -960,15 +888,18 @@ main     (int argc, char *argv[])
    }
    yKINE_init      (0);
    yKINE_center    (0.0, 0.0, 0.0);
-   yKINE_script  (&x_len);
+   yKINE_script    (&x_len);
    yKINE_moves_rpt ();
-   DATA_list ();
+   DATA_list       ();
+   DATA_adj_table  ();
    printf ("script length %8.3lf\n", x_len);
    if (x_len <= 0.0) {
       PROG_end     ();
       exit (-2);
    }
 
+
+   /*> return 0;                                                                      <*/
 
    /*---(show)-----------------------------------------*/
    /*> for (i = YKINE_RR; i <= YKINE_LR; ++i) {                                                                                                                  <* 
