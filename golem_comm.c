@@ -1,12 +1,12 @@
 /*============================----beg-of-source---============================*/
-
 #include "golem.h"
 
 
 
-typedef struct termios TERMIOS;
-TERMIOS   oldtio;
-TERMIOS   newtio;
+/*--------- ----------- ----------- ----------- ------------------------------*/
+typedef     struct      termios     tTERMIOS;
+static      tTERMIOS    s_oldtio;
+static      tTERMIOS    s_newtio;
 
 
 
@@ -15,8 +15,65 @@ TERMIOS   newtio;
 /*====================------------------------------------====================*/
 static void      o___COMM____________________o (void) {;}
 
-int        /* ---- : open a communication channel to the robot ---------------*/
-COMM_open          (char *a_dev)
+char
+COMM_init               (void)
+{
+   /*---(locals)-------------------------*/
+   char        rc          =    0;
+   /*---(header)-------------------------*/
+   DEBUG_SIGN   yLOG_enter   (__FUNCTION__);
+   my.port      = -1;
+   rc = COMM_device (DEV_SPIDER);
+   /*---(complete)-----------------------*/
+   DEBUG_SIGN   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
+char       /* ---- : open a communication channel to the robot ---------------*/
+COMM_device             (char *a_dev)
+{
+   /*---(locals)-------------------------*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   tSTAT       s;
+   /*---(header)-------------------------*/
+   DEBUG_SIGN   yLOG_enter   (__FUNCTION__);
+   /*---(defense)------------------------*/
+   DEBUG_SIGN   yLOG_point   ("a_dev"     , a_dev);
+   --rce;  if (a_dev == NULL) {
+      DEBUG_SIGN   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_SIGN   yLOG_info    ("a_dev"     , a_dev);
+   /*---(check on file)------------------*/
+   rc = stat (a_dev, &s);
+   DEBUG_SIGN   yLOG_value   ("stat"      , rc);
+   --rce;  if (rc < 0) {
+      DEBUG_SIGN   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_SIGN   yLOG_note    ("file exists");
+   /*---(check type)---------------------*/
+   DEBUG_SIGN   yLOG_value   ("dir"       , S_ISDIR (s.st_mode));
+   DEBUG_SIGN   yLOG_value   ("link"      , S_ISLNK (s.st_mode));
+   DEBUG_SIGN   yLOG_value   ("reg"       , S_ISREG (s.st_mode));
+   DEBUG_SIGN   yLOG_value   ("char"      , S_ISCHR (s.st_mode));
+   DEBUG_SIGN   yLOG_value   ("block"     , S_ISBLK (s.st_mode));
+   if (!S_ISCHR (s.st_mode)) {
+      DEBUG_SIGN   yLOG_note    ("not a char device");
+      DEBUG_SIGN   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_SIGN   yLOG_note    ("is a char device");
+   /*---(save)---------------------------*/
+   strlcpy (my.device, a_dev, LEN_RECD);
+   /*---(complete)-----------------------*/
+   DEBUG_SIGN   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
+char       /* ---- : open a communication channel to the robot ---------------*/
+COMM_open               (void)
 {
    /*---(notes)--------------------------*/
    /*
@@ -26,70 +83,91 @@ COMM_open          (char *a_dev)
     *
     */
    /*---(locals)-------------------------*/
-   int       fd        = 0;       /* file descriptor                          */
+   char        rce         =  -10;
+   int         fd          =    0;       /* file descriptor                          */
+   /*---(header)-------------------------*/
+   DEBUG_SIGN   yLOG_enter   (__FUNCTION__);
+   /*---(defense)------------------------*/
+   DEBUG_SIGN   yLOG_info    ("device"    , my.device);
    /*---(open)---------------------------*/
-   fd = open(a_dev, O_RDWR | O_NOCTTY | O_NONBLOCK);
-   if (fd == -1) {
-      fprintf(stderr, "can not open serial port %s\n", a_dev);
-   } else {
-      fprintf(stderr, "port %s is successfully open at %d\n", a_dev, fd);
-      fcntl (fd, F_SETFL, 0);
+   fd = open (my.device, O_RDWR | O_NOCTTY | O_NONBLOCK);
+   DEBUG_SIGN   yLOG_value   ("fd"        , fd);
+   --rce;  if (fd == -1) {
+      fprintf(stderr, "can not open serial port %s\n", my.device);
+      DEBUG_SIGN   yLOG_note    ("can not open serial port");
+      DEBUG_SIGN   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
    }
+   fcntl (fd, F_SETFL, 0);
    /*---(get current term settings)------*/
-   tcgetattr(fd, &oldtio);
+   tcgetattr(fd, &s_oldtio);
    /*---(prepare new one)----------------*/
-   bzero(&newtio, sizeof(TERMIOS));
-   /*> newtio.c_cflag = B115200 | CS8 | CLOCAL | CREAD;                               <*/
-   newtio.c_cflag = B2400 | CS8 | CLOCAL | CREAD;
-   cfsetispeed(&newtio, B115200);
-   /*> cfsetispeed(&newtio, B2400);                                                   <*/
-   cfsetospeed(&newtio, B115200);
-   /*> cfsetospeed(&newtio, B2400);                                                   <*/
-   /*> newtio.c_cflag |= (CLOCAL | CREAD);                                            <* 
-    *> newtio.c_cflag &= ~CSIZE;                                                      <* 
-    *> newtio.c_cflag &= ~PARENB;                                                     <* 
-    *> newtio.c_cflag &= ~CSTOPB;                                                     <* 
-    *> newtio.c_cflag |= CS8;                                                         <*/
-   newtio.c_iflag  = IGNPAR  | ICRNL   ;
-   newtio.c_oflag  = 0       ;
-   newtio.c_lflag  = ICANON  ;
+   bzero(&s_newtio, sizeof (tTERMIOS));
+   /*> s_newtio.c_cflag = B115200 | CS8 | CLOCAL | CREAD;                               <*/
+   s_newtio.c_cflag = B2400 | CS8 | CLOCAL | CREAD;
+   cfsetispeed(&s_newtio, B115200);
+   /*> cfsetispeed(&s_newtio, B2400);                                                   <*/
+   cfsetospeed(&s_newtio, B115200);
+   /*> cfsetospeed(&s_newtio, B2400);                                                   <*/
+   /*> s_newtio.c_cflag |= (CLOCAL | CREAD);                                            <* 
+    *> s_newtio.c_cflag &= ~CSIZE;                                                      <* 
+    *> s_newtio.c_cflag &= ~PARENB;                                                     <* 
+    *> s_newtio.c_cflag &= ~CSTOPB;                                                     <* 
+    *> s_newtio.c_cflag |= CS8;                                                         <*/
+   s_newtio.c_iflag  = IGNPAR  | ICRNL   ;
+   s_newtio.c_oflag  = 0       ;
+   s_newtio.c_lflag  = ICANON  ;
    tcflush   (fd, TCIFLUSH);
-   tcsetattr (fd, TCSANOW, &newtio);
+   tcsetattr (fd, TCSANOW, &s_newtio);
+   /*---(save)---------------------------*/
+   my.port = fd;
+   DEBUG_SIGN   yLOG_value   ("port"      , my.port);
    /*---(complete)-----------------------*/
-   return fd;
+   DEBUG_SIGN   yLOG_exit    (__FUNCTION__);
+   return 0;
 }
 
 char       /* ---- : close the communcation channel to the robot -------------*/
-COMM_close         (int a_port)
+COMM_close              (void)
 {
-   /*---(defenses)-----------------------*/
-   if (a_port < 0) return -1;
    /*---(locals)-------------------------*/
-   int       rc        = 0;       /* generic return code    */
-   /*---(close)--------------------------*/
-   rc = close(a_port);
-   if (rc == 0) {
-      fprintf(stderr, "port is successfully closed\n");
-   } else {
-      fprintf(stderr, "could not close serial port\n");
+   char        rce         =  -10;
+   int         rc          =    0;       /* generic return code    */
+   /*---(header)-------------------------*/
+   DEBUG_SIGN   yLOG_enter   (__FUNCTION__);
+   /*---(defenses)-----------------------*/
+   --rce;  if (my.port < 0) {
+      DEBUG_SIGN   yLOG_note    ("serial port is not open");
+      DEBUG_SIGN   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
    }
+   /*---(close)--------------------------*/
+   rc = close (my.port);
+   DEBUG_SIGN   yLOG_value   ("close"     , rc);
+   if (rc <  0) {
+      DEBUG_SIGN   yLOG_note    ("could not close the serial port");
+      DEBUG_SIGN   yLOG_exitr   (__FUNCTION__, rce);
+      return 0;
+   }
+   DEBUG_SIGN   yLOG_note    ("serial port successfully closed");
    /*---(set terminal back)--------------*/
-   tcsetattr(a_port, TCSANOW, &oldtio);
+   tcsetattr (my.port, TCSANOW, &s_oldtio);
    /*---(complete)-----------------------*/
+   DEBUG_SIGN   yLOG_exit    (__FUNCTION__);
    return 0;
 }
 
 char       /* ---- : transfer control statements to the robot ----------------*/
-golem_write        (int a_port, char *a_text)
+COMM_write              (char *a_text)
 {
    /*---(locals)-------------------------*/
    int       rc        = 0;       /* generic return code                      */
    /*---(write)--------------------------*/
-   write(a_port, a_text, strlen(a_text));
+   write(my.port, a_text, strlen(a_text));
    if (rc < 0) {
-      fprintf(stderr, "could not write data to %d\n", a_port);
+      fprintf(stderr, "could not write data to %d\n", my.port);
    } else if (rc == 0) {
-      fprintf(stderr, "no data was written to %d\n", a_port);
+      fprintf(stderr, "no data was written to %d\n", my.port);
    } else {
       fprintf(stderr, "wrote %d chars <<%s>>\n", rc, a_text);
    }

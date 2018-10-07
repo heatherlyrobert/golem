@@ -28,14 +28,21 @@ PROG_version       (void)
 }
 
 char       /*----: very first setup ------------------s-----------------------*/
-PROG_init          (void)
+PROG_init          (int a_argc, char *a_argv[])
 {
+   char        rc          =    0;
    /*---(header)-------------------------*/
    DEBUG_TOPS   yLOG_enter (__FUNCTION__);
    /*---(basics)-------------------------*/
    DEBUG_TOPS   yLOG_note  ("load description tables from yKINE");
+   yVIKEYS_init ();
    DATA_init    ();
    my.noadj     = '-';
+   rc = COMM_init ();
+   if (rc < 0) {
+      DEBUG_TOPS   yLOG_exitr   (__FUNCTION__, rc);
+      return rc;
+   }
    /*---(complete)-----------------------*/
    DEBUG_TOPS   yLOG_exit  (__FUNCTION__);
    return 0;
@@ -99,11 +106,26 @@ PROG_args          (int argc, char *argv[])
    return 0;
 }
 
-
 char       /*----: drive program setup activities ----------------------------*/
 PROG_begin         (void)
 {
+   char        rc          =    0;
    DEBUG_TOPS   yLOG_enter   (__FUNCTION__);
+   rc = COMM_open ();
+   if (rc < 0) {
+      DEBUG_TOPS   yLOG_exitr   (__FUNCTION__, rc);
+      return rc;
+   }
+   DEBUG_TOPS   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
+char       /*----: drive program setup activities ----------------------------*/
+PROG_final         (void)
+{
+   DEBUG_TOPS   yLOG_enter   (__FUNCTION__);
+   yVIKEYS_run_curses ("golem, spider controller", VER_NUM);
+   yVIKEYS_view_basic (YVIKEYS_MAIN, YVIKEYS_FLAT, YVIKEYS_TOPLEF, 0, DRAW_main);
    DEBUG_TOPS   yLOG_exit    (__FUNCTION__);
    return 0;
 }
@@ -112,7 +134,14 @@ PROG_begin         (void)
 char       /*----: drive the program closure activities ----------------------*/
 PROG_end           (void)
 {
+   char        rc          =    0;
    DEBUG_PROG   yLOG_enter   (__FUNCTION__);
+   yVIKEYS_wrap ();
+   rc = COMM_close ();
+   if (rc < 0) {
+      DEBUG_TOPS   yLOG_exitr   (__FUNCTION__, rc);
+      return rc;
+   }
    DEBUG_PROG   yLOG_exit    (__FUNCTION__);
    DEBUG_TOPS   yLOG_end     ();
    return 0;

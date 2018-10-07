@@ -58,8 +58,8 @@
 
 
 /* rapidly evolving version number to aid with visual change confirmation     */
-#define     VER_NUM   "0.5j"
-#define     VER_TXT   "transitioned to yURG for urgent processing"
+#define     VER_NUM   "0.6a"
+#define     VER_TXT   "started move to yVIKEYS ncurses and better debugging."
 
 
 
@@ -73,6 +73,11 @@
 #include    <termios.h>           /* clibc standard terminal control          */
 #include    <math.h>              /* clibc standard math                      */
 #include    <time.h>              /* CLIBC  standard time and date handling   */
+#include    <sys/types.h>         /* CLIBC types                              */
+#include    <sys/stat.h>          /* CLIBC status checking                    */
+
+/*===[[ DE-FACTO STANDARD LIBRARIES ]]========================================*/
+#include    <ncurses.h>      /* CURSES : mvprintw, refresh, getch, ...        */
 
 /*---(heatherly made)--------------------*/
 #include    <yURG.h>         /* CUSTOM  heatherly urgent processing           */
@@ -96,6 +101,7 @@ typedef     unsigned    long long   ullong;
 typedef     struct      FILE        tFILE;
 typedef     struct      tm          tTIME;
 typedef     struct      timespec    tTSPEC;
+typedef     struct      stat        tSTAT;
 /*---(data structures)-----------------*/
 typedef     struct      cDEBUG      tDEBUG;
 typedef     struct      cACCESSOR   tACCESSOR;
@@ -116,14 +122,14 @@ typedef     struct      cACCESSOR   tACCESSOR;
 
 
 
-
-
+#define     DEV_SPIDER   "/dev/usb/ttyUSB0"
 struct cACCESSOR {
-   /*---(progress move)------------------*/
-   double      p_waitns;
-   /*---(flags)--------------------------*/
+   /*---(datacomm)----------*/
+   char        device      [LEN_RECD];
+   int         port;
+   /*---(flags)-------------*/
    char        noadj;
-   /*---(done)---------------------------*/
+   /*---(done)--------------*/
 };
 extern      tACCESSOR my;
 
@@ -173,13 +179,23 @@ int         DATA_adjust        (int     a_servo     , int      a_angle     );
 int         main               (int argc, char *argv[]);
 
 /*---(arachne_prog)----------------------*/
-char        PROG_init          (void);
+char        PROG_init          (int argc, char *argv[]);
 char        PROG_urgsmass      (char a_set, char a_extra);
 char        PROG_urgs          (int argc, char *argv[]);
 char        PROG_args          (int argc, char *argv[]);
 char        PROG_begin         (void);
+char        PROG_begin         (void);
 char        PROG_end           (void);
 
+
+char        DRAW_main          (void);
+
+/*--------- ----------- ----------- ----------- ------------------------------*/
+char        COMM_init               (void);
+char        COMM_device             (char *a_path);
+char        COMM_open               (void);
+char        COMM_close              (void);
+char        COMM_write              (char *a_text);
 
 
 
